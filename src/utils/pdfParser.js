@@ -10,27 +10,35 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
  */
 export async function extractTextFromPDF(file) {
   const arrayBuffer = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise
 
   const pages = []
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
+    const content = await page.getTextContent()
     let pageText = ''
     let lastY = null
     let lineText = ''
+
     for (const item of content.items) {
-      if (lastY !== null && lastY !== item.transform[5]) {
+      if (!('str' in item)) {
+        continue
+      }
+
+      if (lastY !== null && Math.abs(lastY - item.transform[5]) > 2) {
         pageText += lineText + '\n'
         lineText = ''
       }
+
       lineText += item.str + ' '
       lastY = item.transform[5]
     }
+
     pageText += lineText
     pages.push(pageText)
   }
 
-  return pages.join('\n')
+  return pages.join('\n').trim()
 }
 
 /**
