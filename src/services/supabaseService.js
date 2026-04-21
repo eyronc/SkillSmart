@@ -94,10 +94,10 @@ export async function saveAnalysisSession({ resumeText, extractedSkills, results
 
     return {
       success: true,
-      message: 'Analysis saved to Supabase.',
+      message: 'Analysis saved.',
     }
   } catch (error) {
-    console.error('Supabase save error:', error)
+    console.error('Error:', error)
 
     return {
       success: false,

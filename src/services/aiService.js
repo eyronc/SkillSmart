@@ -84,3 +84,41 @@ Return ONLY a valid JSON object in this exact format, no explanation, no markdow
 
   return parseJSON(chat.choices[0].message.content.trim())
 }
+
+/**
+ * Uses Groq to generate a practice interview based on missing skills.
+ */
+export async function generatePracticeInterview(missingSkills, jobTitle) {
+  const prompt = `You are an expert technical interviewer.
+The candidate is applying for the role of ${jobTitle}.
+They are missing the following required skills: ${missingSkills.join(', ')}.
+
+Generate a practice interview consisting of 3 to 5 targeted questions (and brief expected points in the answer) to help them prepare and learn these missing skills.
+Return ONLY valid JSON in this exact format:
+{
+  "questions": [
+    {
+      "skill": "Matched Skill Name",
+      "question": "The interview question",
+      "expectedPoints": ["point 1", "point 2"]
+    }
+  ]
+}`
+
+  const chat = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a supportive technical interviewer helping a candidate close skill gaps. Return only valid JSON.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    temperature: 0.3,
+  })
+
+  return parseJSON(chat.choices[0].message.content.trim())
+}

@@ -4,11 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: '#1E293B',
-        electric: '#3B82F6',
+        navy: '#0F172A', // Keep for deep contrast
+        pDark: '#59167F',
+        pMain: '#8601CE',
+        pBrand: '#8627D9',
+        pLight: '#9961FF',
+        pAccent: '#ED9BFF',
+        textPrimary: '#F8FAFC',
+        textMuted: '#E2E8F0',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
     },
   },
