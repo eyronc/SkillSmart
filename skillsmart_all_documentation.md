@@ -144,7 +144,7 @@ The SkillSmart technology stack is selected to prioritize rapid development, rea
 - Justification: Supabase provides a powerful managed PostgreSQL database. Its built-in Row Level Security (RLS) handles user data privacy out-of-the-box, while Supabase Storage serves as the ideal location for storing uploaded resume PDFs for subsequent AI extraction.
 
 ## 5. AI Engine & Logic
-- Provider: OpenAI API (GPT-4o or GPT-4-turbo)
+- Provider: Groq Llamma Versatile
 - Logic Nuance: The system will perform a two-step semantic comparison:
     1. Extraction: Parse the uploaded PDF/text to create a structured JSON list of existing user skills.
     2. Gap Analysis: Compare the extracted JSON against the manually input Job Description. The logic will strictly identify the delta between the two, specifically flagging "Missing Skills" that prevent a full match.
@@ -157,7 +157,7 @@ The SkillSmart technology stack is selected to prioritize rapid development, rea
 ## 7. Data Flow Summary
 1. User inputs Job Description text and uploads PDF Resume.
 2. Frontend sends raw data to Supabase Edge Function.
-3. Edge Function triggers OpenAI API to perform skill extraction and semantic gap analysis.
+3. Edge Function triggers GROQ API to perform skill extraction and semantic gap analysis.
 4. OpenAI returns a structured response containing: Missing Skills, Gap Severity, and curated Learning Resources (Links/Courses).
 5. React frontend renders the step-by-step results dashboard.
 
