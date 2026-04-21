@@ -1,8 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getInterviewTemplate } from '../data/interviewTemplates'
 import CareerRoadmap from './CareerRoadmap'
 import { buildCareerRoadmap } from '../utils/roadmap'
 import { exportRoadmapToPdf } from '../utils/roadmapExport'
+
+// Smooth accordion panel — animates to exact measured height
+function AccordionBody({ open, children }) {
+  const innerRef = useRef(null)
+  const [maxH, setMaxH] = useState('0px')
+
+  useEffect(() => {
+    if (!innerRef.current) return
+    if (open) {
+      setMaxH(`${innerRef.current.scrollHeight}px`)
+    } else {
+      // Snapshot current height first so the closing transition starts from the right value
+      setMaxH(`${innerRef.current.scrollHeight}px`)
+      // Then on next frame collapse to 0 so the transition fires
+      requestAnimationFrame(() => setMaxH('0px'))
+    }
+  }, [open])
+
+  return (
+    <div
+      style={{
+        overflow: 'hidden',
+        maxHeight: maxH,
+        opacity: open ? 1 : 0,
+        transition: open
+          ? 'max-height 360ms cubic-bezier(0,0,0.2,1), opacity 220ms ease'
+          : 'max-height 260ms cubic-bezier(0.4,0,1,1), opacity 180ms ease',
+      }}
+    >
+      <div ref={innerRef}>{children}</div>
+    </div>
+  )
+}
 
 function categorizeSkills(skills) {
   const categories = {
@@ -50,9 +83,9 @@ function scoreColor(score) {
 function ScoreBadge({ score }) {
   let className = 'text-[11px] sm:text-xs font-black px-3 py-1.5 rounded-full border tracking-[0.12em] uppercase whitespace-nowrap '
 
-  if (score >= 76) className += 'bg-pAccent/10 text-pAccent border-pAccent/30'
-  else if (score >= 41) className += 'bg-white/10 text-white border-white/20'
-  else className += 'bg-white/5 text-gray-300 border-white/10'
+  if (score >= 76) className += 'bg-pAccent/15 text-pMain border-pAccent/40'
+  else if (score >= 41) className += 'bg-pLight/10 text-pMain border-pLight/30'
+  else className += 'bg-amber-100 text-amber-700 border-amber-300/60'
 
   return <span className={className}>{score}% Match</span>
 }
@@ -230,8 +263,7 @@ export default function Results({
                   </div>
                 </button>
 
-                <div className={`grid transition-all duration-300 ease-in-out ${expanded === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
+                <AccordionBody open={expanded === index}>
                     <div className="px-5 sm:px-6 pb-6 border-t border-white/10 pt-5 grid lg:grid-cols-2 gap-5 bg-black/10">
                       <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
                         <h4 className="text-[11px] font-black uppercase tracking-[0.24em] text-pAccent mb-4">Matched Skills</h4>
@@ -303,8 +335,7 @@ export default function Results({
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
+                </AccordionBody>
               </div>
             )
           })}
@@ -313,7 +344,7 @@ export default function Results({
 
       <button
         onClick={onReset}
-        className="px-6 py-3 bg-transparent border border-white/20 rounded-2xl text-sm text-white font-bold tracking-[0.14em] uppercase hover:bg-white/10 transition-all flex items-center gap-2"
+        className="px-6 py-3 bg-white border border-violet-200 rounded-2xl text-sm text-[#1E1B4B] font-bold tracking-[0.14em] uppercase hover:bg-violet-50 hover:border-pBrand transition-all flex items-center gap-2 shadow-sm"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Analyze Another Resume

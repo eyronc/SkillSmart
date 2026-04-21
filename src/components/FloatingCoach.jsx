@@ -53,6 +53,7 @@ export default function FloatingCoach({ resumeText, extractedSkills, results, ro
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Hi! Ask me anything about your resume, skill gaps, or next steps.' },
   ])
+  const [dynamicChips, setDynamicChips] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef(null)
@@ -78,14 +79,18 @@ export default function FloatingCoach({ resumeText, extractedSkills, results, ro
     setLoading(true)
 
     try {
-      const reply = await answerResumeCoachQuestion({
+      const response = await answerResumeCoachQuestion({
         question,
         resumeText: resumeText || '',
         extractedSkills: extractedSkills || [],
         results: results || [],
         roadmap,
+        history: messages,
       })
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: response.answer }])
+      if (Array.isArray(response.followUps) && response.followUps.length > 0) {
+        setDynamicChips(response.followUps.slice(0, 3))
+      }
     } catch {
       const fallback = buildFallbackReply(question, roadmap)
       setMessages((prev) => [...prev, { role: 'assistant', content: fallback }])
@@ -156,7 +161,7 @@ export default function FloatingCoach({ resumeText, extractedSkills, results, ro
           {/* Prompt chips */}
           {hasResume && (
             <div className="px-4 pb-2 flex flex-wrap gap-1.5">
-              {PROMPT_CHIPS.map((chip) => (
+              {(dynamicChips.length > 0 ? dynamicChips : PROMPT_CHIPS).map((chip) => (
                 <button
                   key={chip}
                   type="button"
