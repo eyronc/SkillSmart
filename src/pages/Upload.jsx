@@ -11,6 +11,7 @@ import { getInterviewTemplate } from '../data/interviewTemplates'
 import { evaluateInterviewResponse, extractSkillsFromResume } from '../services/aiService'
 import { matchJobsByKeywords } from '../utils/matcher'
 import { saveAnalysisSession, saveInterviewAttempt } from '../services/supabaseService'
+import FloatingCoach from '../components/FloatingCoach'
 
 const uploadSteps = ['Input Resume', 'Analyzing...', 'Results', 'Interview', 'Feedback']
 const UPLOAD_SESSION_STORAGE_KEY = 'skillsmart.upload.session.v1'
@@ -18,6 +19,7 @@ const UPLOAD_SESSION_STORAGE_KEY = 'skillsmart.upload.session.v1'
 function createDefaultUploadState() {
   return {
     step: 1,
+    resumeText: '',
     extractedSkills: [],
     results: [],
     saveState: 'idle',
@@ -139,6 +141,7 @@ export default function Upload() {
   const [initialFlowState] = useState(() => getInitialUploadState())
   const [step, setStep] = useState(initialFlowState.step)
   const [loadingMsg, setLoadingMsg] = useState('')
+  const [resumeText, setResumeText] = useState(initialFlowState.resumeText || '')
   const [extractedSkills, setExtractedSkills] = useState(initialFlowState.extractedSkills)
   const [results, setResults] = useState(initialFlowState.results)
   const [error, setError] = useState(null)
@@ -242,6 +245,7 @@ export default function Upload() {
     const persistedStep = step === 2 ? (results.length > 0 ? 3 : 1) : step
     const snapshot = {
       step: persistedStep,
+      resumeText,
       extractedSkills,
       results,
       saveState,
@@ -256,6 +260,7 @@ export default function Upload() {
 
     const hasSavedProgress =
       snapshot.step > 1 ||
+      snapshot.resumeText.trim().length > 0 ||
       snapshot.extractedSkills.length > 0 ||
       snapshot.results.length > 0 ||
       !!snapshot.selectedInterviewJob ||
@@ -269,6 +274,7 @@ export default function Upload() {
     window.sessionStorage.setItem(UPLOAD_SESSION_STORAGE_KEY, JSON.stringify(snapshot))
   }, [
     step,
+    resumeText,
     extractedSkills,
     results,
     saveState,
@@ -285,6 +291,7 @@ export default function Upload() {
     setError(null)
     setSaveState('idle')
     setSaveMessage('')
+    setResumeText(resumeText)
     goToStep(2, { replace: true })
 
     let aiExtractedSkills = []
@@ -331,6 +338,7 @@ export default function Upload() {
     revokeLocalAudioPreview(interviewResult)
     clearStoredUploadSession()
     goToStep(1, { replace: true })
+    setResumeText('')
     setExtractedSkills([])
     setResults([])
     setError(null)
@@ -450,55 +458,131 @@ export default function Upload() {
     setInterviewSaveMessage('')
   }
 
+  const stageHeadline =
+    step === 1
+      ? 'Turn one resume into a sharper job strategy.'
+      : step === 2
+        ? 'Analyzing your resume against role requirements.'
+        : step === 3
+          ? 'Review your fit, ask the coach, and export a roadmap.'
+          : step === 4
+            ? 'Practice the role with the same resume context.'
+            : 'Translate your interview feedback into a clearer next step.'
+
+  const stageCopy =
+    step === 1
+      ? 'Upload once, get skill extraction, role matching, a resume coach, and a printable roadmap.'
+      : step === 2
+        ? 'SkillSmart is extracting signals from your resume and comparing them with the supported job profiles.'
+        : step === 3
+          ? 'Use the roadmap to prioritize gaps, then ask the coach how to tighten your resume and target the right role.'
+          : step === 4
+            ? 'The mock interview stays anchored to your selected role so practice feels consistent with the analysis.'
+            : 'Use the interview notes and roadmap together so the next revision is more targeted than the last one.'
+
+  const topResult = results[0] || null
+
   return (
-    <div className="min-h-screen overflow-x-hidden flex flex-col w-full" style={{ backgroundImage: 'linear-gradient(135deg, #0F172A 0%, #59167F 100%)' }}>
-      <Navbar />
+    <div className="min-h-screen overflow-x-hidden relative bg-[#f5effe]">
+      {/* Soft ambient violet blobs — no image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 45% at 5% 0%, rgba(134,1,206,0.10) 0%, transparent 55%), radial-gradient(ellipse 55% 40% at 95% 100%, rgba(153,97,255,0.12) 0%, transparent 55%)',
+        }}
+      />
 
-      {/* Main */}
-      <main className={`${step >= 4 ? 'max-w-6xl' : 'max-w-4xl'} w-full mx-auto px-4 sm:px-6 py-6 md:py-10 flex-1`}>
-        <Stepper currentStep={step} steps={uploadSteps} />
-
-        {error && (
-          <div className="mb-6 max-w-2xl mx-auto bg-red-500/10 border border-red-500/50 text-red-100 rounded-lg px-4 py-3 text-sm">
-            {error}
-          </div>
-        )}
-
-        {step === 1 && <ResumeInput onSubmit={handleResumeSubmit} />}
-        {step === 2 && <LoadingState message={loadingMsg} />}
-        {step === 3 && (
-          <Results
+      <div className="relative z-10 flex flex-col min-h-screen w-full">
+        <Navbar />
+        {(step === 3 || step === 5) && (
+          <FloatingCoach
+            resumeText={resumeText}
             extractedSkills={extractedSkills}
             results={results}
-            onReset={handleReset}
-            onStartInterview={handleStartInterview}
-            saveState={saveState}
-            saveMessage={saveMessage}
           />
         )}
 
-        {step === 4 && selectedInterviewJob && selectedInterviewTemplate && (
-          <MockInterview
-            job={selectedInterviewJob}
-            template={selectedInterviewTemplate}
-            onBack={handleBackToResults}
-            onComplete={handleInterviewComplete}
-            submitting={interviewSaving}
-          />
-        )}
+        <main className={`${step >= 4 ? 'max-w-6xl' : 'max-w-7xl'} w-full mx-auto px-4 sm:px-6 py-6 md:py-10 flex-1`}>
+          <section className="mb-6 md:mb-8">
+            <p className="text-[11px] font-black uppercase tracking-[0.32em] text-pBrand mb-3">SkillSmart Studio</p>
+            <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
+              <div className="max-w-3xl">
+                <h1 className="font-['Plus_Jakarta_Sans'] text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[0.98] text-[#1E1B4B]">
+                  {stageHeadline}
+                </h1>
+                <p className="mt-4 text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl leading-8">
+                  {stageCopy}
+                </p>
+              </div>
 
-        {step === 5 && selectedInterviewJob && selectedInterviewTemplate && interviewResult && (
-          <InterviewFeedback
-            job={selectedInterviewJob}
-            template={selectedInterviewTemplate}
-            result={interviewResult}
-            saveState={interviewSaveState}
-            saveMessage={interviewSaveMessage}
-            onRetry={handleRetryInterview}
-            onBackToResults={handleBackToResults}
-          />
-        )}
-      </main>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 min-w-0 xl:min-w-[360px]">
+                <div className="rounded-3xl border border-violet-200 bg-white px-4 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-gray-500">Resume Skills</p>
+                  <p className="mt-2 text-2xl font-black text-[#1E1B4B]">{extractedSkills.length || 0}</p>
+                </div>
+                <div className="rounded-3xl border border-violet-200 bg-white px-4 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-gray-500">Top Match</p>
+                  <p className="mt-2 text-2xl font-black text-[#1E1B4B]">{topResult ? `${topResult.score}%` : '--'}</p>
+                </div>
+                <div className="rounded-3xl border border-violet-200 bg-white px-4 py-4 shadow-sm col-span-2 sm:col-span-1">
+                  <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-gray-500">Current Stage</p>
+                  <p className="mt-2 text-lg font-black text-[#1E1B4B]">{uploadSteps[step - 1]}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="bg-white border border-violet-200 rounded-[28px] px-4 sm:px-6 py-4 mb-6 md:mb-8 shadow-sm">
+            <Stepper currentStep={step} steps={uploadSteps} />
+          </div>
+
+          {error && (
+            <div className="mb-6 max-w-3xl bg-red-50 border border-red-300 text-red-700 rounded-2xl px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
+
+          {step === 1 && <ResumeInput onSubmit={handleResumeSubmit} initialText={resumeText} />}
+          {step === 2 && <LoadingState message={loadingMsg} />}
+          {step === 3 && (
+            <Results
+              resumeText={resumeText}
+              extractedSkills={extractedSkills}
+              results={results}
+              onReset={handleReset}
+              onStartInterview={handleStartInterview}
+              saveState={saveState}
+              saveMessage={saveMessage}
+            />
+          )}
+
+          {step === 4 && selectedInterviewJob && selectedInterviewTemplate && (
+            <MockInterview
+              job={selectedInterviewJob}
+              template={selectedInterviewTemplate}
+              onBack={handleBackToResults}
+              onComplete={handleInterviewComplete}
+              submitting={interviewSaving}
+            />
+          )}
+
+          {step === 5 && selectedInterviewJob && selectedInterviewTemplate && interviewResult && (
+            <InterviewFeedback
+              resumeText={resumeText}
+              extractedSkills={extractedSkills}
+              results={results}
+              job={selectedInterviewJob}
+              template={selectedInterviewTemplate}
+              result={interviewResult}
+              saveState={interviewSaveState}
+              saveMessage={interviewSaveMessage}
+              onRetry={handleRetryInterview}
+              onBackToResults={handleBackToResults}
+            />
+          )}
+        </main>
+      </div>
     </div>
   )
 }

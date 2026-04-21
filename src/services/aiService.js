@@ -69,6 +69,89 @@ function normalizeInterviewEvaluation(template, modelResult) {
   }
 }
 
+export async function answerResumeCoachQuestion({
+  resumeText,
+  extractedSkills = [],
+  results = [],
+  roadmap = null,
+  question,
+  history = [],
+}) {
+  if (!import.meta.env.VITE_GROQ_API_KEY) {
+    throw new Error('Groq API key is not configured.')
+  }
+
+  const trimmedQuestion = typeof question === 'string' ? question.trim() : ''
+
+  if (!trimmedQuestion) {
+    throw new Error('A resume coach question is required.')
+  }
+
+  const condensedHistory = history
+    .slice(-6)
+    .map((entry) => ({
+      role: entry.role === 'user' ? 'user' : 'assistant',
+      content: typeof entry.content === 'string' ? entry.content.trim() : '',
+    }))
+    .filter((entry) => entry.content)
+
+  const prompt = `You are SkillSmart Resume Coach.
+
+Answer only from the supplied resume, extracted skills, role-match results, and roadmap. Do not invent experience, metrics, or projects that are not in the context. Be direct, practical, and concise.
+
+Resume text:
+${resumeText}
+
+Extracted skills:
+${JSON.stringify(extractedSkills, null, 2)}
+
+Role match results:
+${JSON.stringify(results.slice(0, 5), null, 2)}
+
+Roadmap summary:
+${JSON.stringify(roadmap, null, 2)}
+
+Recent conversation:
+${JSON.stringify(condensedHistory, null, 2)}
+
+User question:
+${trimmedQuestion}
+
+Return ONLY valid JSON in this format:
+{
+  "answer": "A concise answer under 180 words.",
+  "followUps": ["Suggested follow-up 1", "Suggested follow-up 2", "Suggested follow-up 3"]
+}`
+
+  const chat = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a resume coach inside a hackathon demo app. Use only the supplied context. Return only valid JSON.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    temperature: 0.3,
+  })
+
+  const parsed = parseJSON(chat.choices[0].message.content.trim())
+  const answer = typeof parsed?.answer === 'string' ? parsed.answer.trim() : ''
+
+  if (!answer) {
+    throw new Error('Resume coach response was empty.')
+  }
+
+  return {
+    answer,
+    followUps: toStringList(parsed?.followUps).slice(0, 3),
+  }
+}
+
 /**
  * Uses Groq to extract a list of skills from resume text.
  * Returns an array of skill strings.

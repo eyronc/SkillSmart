@@ -1,31 +1,37 @@
 import { useState } from 'react'
 import { getInterviewTemplate } from '../data/interviewTemplates'
+import CareerRoadmap from './CareerRoadmap'
+import { buildCareerRoadmap } from '../utils/roadmap'
+import { exportRoadmapToPdf } from '../utils/roadmapExport'
 
 function categorizeSkills(skills) {
   const categories = {
     'Technical & Tools': [],
     'Analytical & Data': [],
     'Management & Process': [],
-    'Interpersonal & Soft Skills': []
+    'Interpersonal & Soft Skills': [],
   }
-  
-  skills.forEach(skill => {
-    const norm = skill.toLowerCase()
-    if (norm.match(/aws|cloud|software|ats|hris|database|sql|javascript|scripting|system|tech|code|react|node|api/)) {
+
+  skills.forEach((skill) => {
+    const normalizedSkill = skill.toLowerCase()
+
+    if (normalizedSkill.match(/aws|cloud|software|ats|hris|database|sql|javascript|scripting|system|tech|code|react|node|api/)) {
       categories['Technical & Tools'].push(skill)
-    } else if (norm.match(/data|analy|critical|problem-solving|logic|reporting|visuali/)) {
+    } else if (normalizedSkill.match(/data|analy|critical|problem-solving|logic|reporting|visuali/)) {
       categories['Analytical & Data'].push(skill)
-    } else if (norm.match(/manage|project|organiza|resource|policy|business|regulatory|law|agile|scrum/)) {
+    } else if (normalizedSkill.match(/manage|project|organiza|resource|policy|business|regulatory|law|agile|scrum/)) {
       categories['Management & Process'].push(skill)
     } else {
       categories['Interpersonal & Soft Skills'].push(skill)
     }
   })
-  
-  Object.keys(categories).forEach(k => {
-    if (categories[k].length === 0) delete categories[k]
+
+  Object.keys(categories).forEach((key) => {
+    if (categories[key].length === 0) {
+      delete categories[key]
+    }
   })
-  
+
   return categories
 }
 
@@ -35,29 +41,134 @@ function formatDuration(totalSeconds) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
-export default function Results({ extractedSkills, results, onReset, onStartInterview, saveState, saveMessage }) {
-  const [expanded, setExpanded] = useState(null)
+function scoreColor(score) {
+  if (score >= 76) return '#ED9BFF'
+  if (score >= 41) return '#8601CE'
+  return '#B794F4'
+}
 
-  function toggle(i) {
-    setExpanded(expanded === i ? null : i)
+function ScoreBadge({ score }) {
+  let className = 'text-[11px] sm:text-xs font-black px-3 py-1.5 rounded-full border tracking-[0.12em] uppercase whitespace-nowrap '
+
+  if (score >= 76) className += 'bg-pAccent/10 text-pAccent border-pAccent/30'
+  else if (score >= 41) className += 'bg-white/10 text-white border-white/20'
+  else className += 'bg-white/5 text-gray-300 border-white/10'
+
+  return <span className={className}>{score}% Match</span>
+}
+
+export default function Results({
+  resumeText,
+  extractedSkills,
+  results,
+  onReset,
+  onStartInterview,
+  saveState,
+  saveMessage,
+}) {
+  const [expanded, setExpanded] = useState(null)
+  const roadmap = buildCareerRoadmap({ extractedSkills, results })
+  const topResult = results[0] || null
+
+  function toggle(index) {
+    setExpanded(expanded === index ? null : index)
+  }
+
+  function handleExportRoadmap() {
+    exportRoadmapToPdf(roadmap)
+  }
+
+  if (!topResult || !roadmap) {
+    return (
+      <div className="glass-panel rounded-[30px] p-8 shadow-[0_28px_90px_rgba(17,24,39,0.28)]">
+        <h2 className="text-2xl font-black text-white">No role matches yet</h2>
+        <p className="mt-3 text-sm text-gray-200 leading-7">
+          Submit a resume to generate match results, a coach conversation, and a roadmap export.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-3xl mx-auto glass-panel p-8 rounded-xl shadow-xl">
-      {/* Extracted Skills */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-white mb-4">Your Extracted Skills</h2>
-        <div className="flex flex-col gap-5">
+    <div className="space-y-6">
+      <section className="glass-panel rounded-[32px] p-6 sm:p-8 shadow-[0_28px_90px_rgba(17,24,39,0.28)] relative overflow-hidden">
+        <div className="absolute -top-16 right-0 w-48 h-48 rounded-full bg-pAccent/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-pAccent mb-3">Resume Intelligence</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+              You are closest to <span className="text-pAccent">{topResult.job_title}</span> right now.
+            </h2>
+            <p className="mt-4 text-sm sm:text-base text-gray-200 leading-8 max-w-2xl">
+              SkillSmart matched {topResult.matched.length} of {topResult.matched.length + topResult.missing.length} required skills using the formula <span className="font-bold text-white">(matched skills / total required skills) x 100</span>. Use the roadmap below to close the remaining gaps with intent.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {roadmap.adjacentRoles.map((role) => (
+                <span
+                  key={role.title}
+                  className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-gray-100"
+                >
+                  {role.title} {role.score}%
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 min-w-0 xl:min-w-[320px]">
+            <div className="rounded-3xl border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-md">
+              <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-gray-300">Top Match</p>
+              <p className="mt-2 text-3xl font-black text-white">{topResult.score}%</p>
+            </div>
+            <div className="rounded-3xl border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-md">
+              <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-gray-300">Detected Skills</p>
+              <p className="mt-2 text-3xl font-black text-white">{extractedSkills.length}</p>
+            </div>
+            <div className="rounded-3xl border border-white/15 bg-white/10 px-4 py-4 backdrop-blur-md col-span-2">
+              <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-gray-300">Primary Gaps</p>
+              <p className="mt-2 text-sm font-semibold text-white leading-7">
+                {roadmap.priorityGaps.join(', ')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {saveMessage && (
+        <div
+          className={`rounded-[24px] border px-4 py-3 text-sm flex items-center gap-2 shadow-[0_18px_40px_rgba(17,24,39,0.15)] ${
+            saveState === 'saved'
+              ? 'border-pAccent/30 bg-pAccent/10 text-pAccent'
+              : 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+          }`}
+        >
+          {saveMessage}
+        </div>
+      )}
+
+      <CareerRoadmap roadmap={roadmap} onExport={handleExportRoadmap} />
+
+      <section className="glass-panel rounded-[32px] p-6 sm:p-8 shadow-[0_28px_90px_rgba(17,24,39,0.24)]">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-pAccent mb-2">Extracted Skills</p>
+            <h3 className="text-2xl font-black text-white">Your resume signals</h3>
+          </div>
+          <p className="text-sm text-gray-300 max-w-xl leading-7">
+            These grouped skills are the strongest signals we found in your resume text and job-match scan.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
           {Object.entries(categorizeSkills(extractedSkills)).map(([category, skills]) => (
-            <div key={category}>
-              <h3 className="text-[10px] font-bold text-pAccent tracking-widest uppercase mb-2">
+            <div key={category} className="rounded-3xl border border-white/10 bg-black/20 p-5">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.24em] text-pAccent mb-4">
                 {category}
-              </h3>
+              </h4>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill) => (
                   <span
                     key={skill}
-                    className="px-3 py-1 bg-pBrand/20 border border-pBrand/30 text-pLight rounded-full text-sm font-bold tracking-tight shadow-[0_0_10px_rgba(134,39,217,0.3)] transition-all hover:bg-pBrand/40"
+                    className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-sm font-bold text-gray-100"
                   >
                     {skill}
                   </span>
@@ -66,180 +177,147 @@ export default function Results({ extractedSkills, results, onReset, onStartInte
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {saveMessage && (
-        <div
-          className={`mb-8 rounded-lg border px-4 py-3 text-sm flex items-center gap-2 ${
-            saveState === 'saved'
-              ? 'border-pAccent/30 bg-pAccent/10 text-pAccent'
-              : 'border-amber-400/30 bg-amber-400/10 text-amber-400'
-          }`}
-        >
-          {saveState === 'saved' ? (
-             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          ) : (
-             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          )}
-          {saveMessage}
+      <section className="glass-panel rounded-[32px] p-6 sm:p-8 shadow-[0_28px_90px_rgba(17,24,39,0.24)]">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-pAccent mb-2">Role Comparison</p>
+            <h3 className="text-2xl font-black text-white">Compare all supported job matches</h3>
+          </div>
+          <p className="text-sm text-gray-300 max-w-xl leading-7">
+            Expand a role to inspect matched skills, missing skills, and the attached mock interview setup.
+          </p>
         </div>
-      )}
 
-      {/* Job Matches */}
-      <h2 className="text-xl font-bold text-white mb-4">Job Matches</h2>
-      <div className="flex flex-col gap-4">
-        {results.map((job, i) => {
-          const interviewTemplate = getInterviewTemplate(job.job_title)
+        <div className="flex flex-col gap-4">
+          {results.map((job, index) => {
+            const interviewTemplate = getInterviewTemplate(job.job_title)
 
-          return (
-            <div key={job.job_title} className="border border-gray-500/30 rounded-lg bg-black/20 shadow-sm overflow-hidden transition-colors hover:border-gray-500/50">
-              {/* Job header */}
-              <button
-                className="w-full flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-5 py-4 text-left focus:outline-none gap-3 sm:gap-4"
-                onClick={() => toggle(i)}
+            return (
+              <div
+                key={job.job_title}
+                className="rounded-[28px] border border-white/10 bg-black/20 shadow-sm overflow-hidden transition-colors hover:border-white/20"
               >
-                <div className="flex items-start sm:items-center justify-between w-full sm:w-auto gap-4">
-                  <span className="font-semibold text-white tracking-wide leading-tight">{job.job_title}</span>
-                  <div className="sm:hidden block shrink-0"><ScoreBadge score={job.score} /></div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-4">
-                  <div className="hidden sm:block"><ScoreBadge score={job.score} /></div>
-                  {/* Progress bar */}
-                  <div className="flex-1 sm:w-32 h-2.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${job.score}%`,
-                        backgroundColor: scoreColor(job.score),
-                        boxShadow: `0 0 8px ${scoreColor(job.score)}`
-                      }}
-                    />
-                  </div>
-                  <span className={`text-[#D7B4F3] text-sm shrink-0 transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </span>
-                </div>
-              </button>
-
-              {/* Expanded details with smooth transition */}
-              <div 
-                className={`grid transition-all duration-300 ease-in-out ${expanded === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-              >
-                <div className="overflow-hidden">
-                  <div className="px-5 pb-5 border-t border-[#8601CE]/30 pt-4 grid sm:grid-cols-2 gap-6 bg-black/10">
-                  {/* Matched */}
-                  <div>
-                    <h3 className="text-xs font-bold text-pAccent tracking-widest uppercase mb-3 flex items-center gap-2">
-                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                       Matched Skills
-                    </h3>
-                    {job.matched.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic">None matched</p>
-                    ) : (
-                      <ul className="flex flex-col gap-2">
-                        {job.matched.map((s) => (
-                          <li key={s} className="text-sm text-gray-300 flex items-center gap-2">
-                             <div className="w-1.5 h-1.5 rounded-full bg-pAccent/50" /> {s}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                <button
+                  className="w-full flex flex-col lg:flex-row lg:items-center justify-between px-5 sm:px-6 py-5 text-left gap-4"
+                  onClick={() => toggle(index)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <span className="text-lg font-black text-white tracking-tight leading-tight">{job.job_title}</span>
+                      <ScoreBadge score={job.score} />
+                    </div>
+                    <p className="text-sm text-gray-300 leading-7 max-w-2xl">
+                      {job.matched.length} matched skills, {job.missing.length} priority gaps.
+                    </p>
                   </div>
 
-                  {/* Missing + Resources */}
-                  <div>
-                    <h3 className="text-xs font-bold text-red-400 tracking-widest uppercase mb-3 flex items-center gap-2">
-                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                       Missing Skills
-                    </h3>
-                    {job.resources.length === 0 ? (
-                      <p className="text-sm text-pAccent font-bold flex items-center gap-2">
-                        No gaps — you qualify!
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><mpath href="#path"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                      </p>
-                    ) : (
-                      <div className="flex flex-col gap-4">
-                        <ul className="flex flex-col gap-2.5">
-                          {job.resources.map(({ skill, resource }) => (
-                            <li key={skill} className="text-sm">
-                              <span className="text-gray-200 font-medium">{skill}</span>
-                              <span className="text-gray-500 mx-2">—</span>
-                              <a
-                                href={resource.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-pAccent hover:text-white hover:underline transition-colors block mt-0.5 text-xs font-bold"
-                              >
-                                {resource.label}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
+                  <div className="flex items-center gap-4 w-full lg:w-auto">
+                    <div className="flex-1 lg:w-48 h-3 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{
+                          width: `${job.score}%`,
+                          backgroundColor: scoreColor(job.score),
+                          boxShadow: `0 0 14px ${scoreColor(job.score)}`,
+                        }}
+                      />
+                    </div>
+                    <span className={`text-pAccent transition-transform duration-300 ${expanded === index ? 'rotate-180' : ''}`}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </div>
+                </button>
+
+                <div className={`grid transition-all duration-300 ease-in-out ${expanded === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-5 sm:px-6 pb-6 border-t border-white/10 pt-5 grid lg:grid-cols-2 gap-5 bg-black/10">
+                      <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                        <h4 className="text-[11px] font-black uppercase tracking-[0.24em] text-pAccent mb-4">Matched Skills</h4>
+                        {job.matched.length === 0 ? (
+                          <p className="text-sm text-gray-400 italic">No direct matches yet.</p>
+                        ) : (
+                          <ul className="space-y-2.5 text-sm text-gray-200">
+                            {job.matched.map((skill) => (
+                              <li key={skill} className="flex items-center gap-3">
+                                <span className="w-1.5 h-1.5 rounded-full bg-pAccent" />
+                                <span>{skill}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
-                    )}
 
-                    {interviewTemplate && (
-                      <div className="mt-4 p-4 bg-pMain/10 border border-pMain/20 rounded-lg">
-                        <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
-                          <div>
-                            <h4 className="text-xs font-bold text-white tracking-[0.25em] uppercase mb-2">
-                              Mock Interview
-                            </h4>
-                            <p className="text-sm text-gray-200 font-semibold">{interviewTemplate.challengeMode}</p>
-                            <p className="text-xs text-gray-400 mt-1 max-w-md">{interviewTemplate.scenarioPrompt}</p>
+                      <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                        <h4 className="text-[11px] font-black uppercase tracking-[0.24em] text-amber-300 mb-4">Missing Skills</h4>
+                        {job.resources.length === 0 ? (
+                          <p className="text-sm text-pAccent font-bold">No visible gaps for this role. You already clear the current checklist.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {job.resources.map(({ skill, resource }) => (
+                              <div key={skill} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                                <p className="text-sm font-bold text-white">{skill}</p>
+                                <a
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-bold text-pAccent mt-1 inline-block hover:text-white transition-colors"
+                                >
+                                  {resource.label}
+                                </a>
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-pAccent/10 border border-pAccent/30 text-pAccent">
-                              {formatDuration(interviewTemplate.timeLimitSeconds)}
-                            </span>
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/5 border border-white/10 text-gray-300">
-                              {interviewTemplate.inputMode === 'speech-preferred' ? 'Speech + text fallback' : 'Written response'}
-                            </span>
-                          </div>
-                        </div>
+                        )}
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            onStartInterview(job)
-                          }}
-                          className="px-4 py-2 bg-pBrand hover:bg-pMain text-white text-sm font-bold rounded-lg transition-colors shadow-[0_0_10px_rgba(134,39,217,0.35)]"
-                        >
-                          Start Mock Interview
-                        </button>
+                        {interviewTemplate && (
+                          <div className="mt-5 rounded-3xl border border-pAccent/20 bg-pAccent/5 p-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                              <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-pAccent mb-2">Mock Interview</p>
+                                <p className="text-sm text-white font-bold">{interviewTemplate.challengeMode}</p>
+                                <p className="text-xs text-gray-300 mt-2 leading-6 max-w-md">{interviewTemplate.scenarioPrompt}</p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/10 border border-white/10 text-white">
+                                  {formatDuration(interviewTemplate.timeLimitSeconds)}
+                                </span>
+                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/10 border border-white/10 text-white">
+                                  {interviewTemplate.inputMode === 'speech-preferred' ? 'Voice + text' : 'Written response'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                onStartInterview(job)
+                              }}
+                              className="px-4 py-2.5 bg-white text-[#1E1B4B] rounded-2xl font-black text-sm tracking-[0.14em] uppercase hover:bg-pAccent transition-colors"
+                            >
+                              Start Mock Interview
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      </section>
 
       <button
         onClick={onReset}
-        className="mt-10 px-6 py-2.5 bg-transparent border border-gray-500/50 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white hover:border-gray-400 transition-all flex items-center gap-2"
+        className="px-6 py-3 bg-transparent border border-white/20 rounded-2xl text-sm text-white font-bold tracking-[0.14em] uppercase hover:bg-white/10 transition-all flex items-center gap-2"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Analyze Another Resume
       </button>
     </div>
   )
-}
-
-function ScoreBadge({ score }) {
-  let cls = 'text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-full border tracking-tight whitespace-nowrap '
-  if (score >= 76) cls += 'bg-pAccent/10 text-pAccent border-pAccent/30 shadow-[0_0_8px_rgba(237,155,255,0.3)]'
-  else if (score >= 41) cls += 'bg-[#8601CE]/20 text-[#D7B4F3] border-[#8601CE]/40 shadow-[0_0_8px_rgba(134,1,206,0.3)]'
-  else cls += 'bg-white/10 text-gray-300 border-white/20 shadow-sm'
-  return <span className={cls}>{score}% Match</span>
-}
-
-function scoreColor(score) {
-  if (score >= 76) return '#ED9BFF' // pAccent
-  if (score >= 41) return '#8601CE' // Landing page prominent purple
-  return '#B794F4' // Lighter purple for visibility
 }
