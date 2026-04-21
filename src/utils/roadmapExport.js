@@ -327,30 +327,43 @@ export function exportRoadmapToPdf(roadmap) {
     </html>
   `
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const blobUrl = URL.createObjectURL(blob)
+  // Use a hidden iframe so no popup is needed — avoids popup-blockers entirely.
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('title', 'SkillSmart Roadmap Print')
+  Object.assign(iframe.style, {
+    position: 'fixed',
+    right: '0',
+    bottom: '0',
+    width: '0',
+    height: '0',
+    border: '0',
+    visibility: 'hidden',
+  })
+  document.body.appendChild(iframe)
 
-  const printWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
-
-  if (!printWindow) {
-    URL.revokeObjectURL(blobUrl)
-    return false
-  }
+  const doc = iframe.contentDocument || iframe.contentWindow.document
+  doc.open()
+  doc.write(html)
+  doc.close()
 
   function triggerPrint() {
-    printWindow.focus()
-    printWindow.print()
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
+    iframe.contentWindow.focus()
+    iframe.contentWindow.print()
   }
 
-  printWindow.onload = triggerPrint
+  // Wait for iframe content to fully load before printing
+  if (iframe.contentDocument.readyState === 'complete') {
+    triggerPrint()
+  } else {
+    iframe.contentWindow.onload = triggerPrint
+    // Safety fallback
+    setTimeout(triggerPrint, 800)
+  }
 
-  // Fallback for browsers that fire onload before we attach it
-  setTimeout(() => {
-    if (!printWindow.closed) {
-      triggerPrint()
-    }
-  }, 1800)
+  // Clean up after the user closes the print dialog
+  iframe.contentWindow.onafterprint = () => {
+    document.body.removeChild(iframe)
+  }
 
   return true
 }
