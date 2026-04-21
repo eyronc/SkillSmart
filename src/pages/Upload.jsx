@@ -522,7 +522,7 @@ export default function Upload() {
                   <p className="mt-2 text-2xl font-black text-[#1E1B4B]">{extractedSkills.length || 0}</p>
                 </div>
                 <div className="rounded-3xl border border-violet-200 bg-white px-4 py-4 shadow-sm">
-                  <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-gray-500">Top Match</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-gray-500">Top<br />Match</p>
                   <p className="mt-2 text-2xl font-black text-[#1E1B4B]">{topResult ? `${topResult.score}%` : '--'}</p>
                 </div>
                 <div className="rounded-3xl border border-violet-200 bg-white px-4 py-4 shadow-sm col-span-2 sm:col-span-1">

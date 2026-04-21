@@ -1,8 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getInterviewTemplate } from '../data/interviewTemplates'
 import CareerRoadmap from './CareerRoadmap'
 import { buildCareerRoadmap } from '../utils/roadmap'
 import { exportRoadmapToPdf } from '../utils/roadmapExport'
+
+// Smooth accordion panel — animates to exact measured height
+function AccordionBody({ open, children }) {
+  const innerRef = useRef(null)
+  const [maxH, setMaxH] = useState('0px')
+
+  useEffect(() => {
+    if (!innerRef.current) return
+    if (open) {
+      setMaxH(`${innerRef.current.scrollHeight}px`)
+    } else {
+      // Snapshot current height first so the closing transition starts from the right value
+      setMaxH(`${innerRef.current.scrollHeight}px`)
+      // Then on next frame collapse to 0 so the transition fires
+      requestAnimationFrame(() => setMaxH('0px'))
+    }
+  }, [open])
+
+  return (
+    <div
+      style={{
+        overflow: 'hidden',
+        maxHeight: maxH,
+        opacity: open ? 1 : 0,
+        transition: open
+          ? 'max-height 360ms cubic-bezier(0,0,0.2,1), opacity 220ms ease'
+          : 'max-height 260ms cubic-bezier(0.4,0,1,1), opacity 180ms ease',
+      }}
+    >
+      <div ref={innerRef}>{children}</div>
+    </div>
+  )
+}
 
 function categorizeSkills(skills) {
   const categories = {
@@ -230,8 +263,7 @@ export default function Results({
                   </div>
                 </button>
 
-                <div className={`grid transition-all duration-300 ease-in-out ${expanded === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
+                <AccordionBody open={expanded === index}>
                     <div className="px-5 sm:px-6 pb-6 border-t border-white/10 pt-5 grid lg:grid-cols-2 gap-5 bg-black/10">
                       <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
                         <h4 className="text-[11px] font-black uppercase tracking-[0.24em] text-pAccent mb-4">Matched Skills</h4>
@@ -303,8 +335,7 @@ export default function Results({
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
+                </AccordionBody>
               </div>
             )
           })}
