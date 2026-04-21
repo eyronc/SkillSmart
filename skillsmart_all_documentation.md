@@ -190,7 +190,7 @@ This project follows a clean, modular architecture leveraging React for the fron
 └── package.json         # Project dependencies
 
 3. Core Module Explanations
-
+a
 - /components/dashboard: Houses the "Step-by-Step" flow. This includes the ResumeDropzone, JobDescriptionInput, and the SkillGapComparison components. Keeping these here ensures the UI logic remains decoupled from data processing.
 
 - /services/aiService.js: The core engine. This module handles communication with the AI provider. It sends the extracted text from the resume and the job description to the model and returns a structured JSON object identifying missing skills.
@@ -295,6 +295,9 @@ Tracks "Verified Badges" earned by users to prove proficiency.
 
 ## 1. OVERVIEW
 The SkillSmart user flow is designed as a linear, step-by-step diagnostic journey. It minimizes cognitive load by segmenting the qualification process into three distinct phases: Input, Analysis, and Growth. The flow emphasizes the \"Gap Report\" as the primary value delivery mechanism.
+
+## Judge Prep Companion
+For current judge Q and A, scoring formulas, interview scoring logic, and product-defense notes, see `skillsmart_judges_qa.md`.
 
 ## 2. DETAILED USER JOURNEYS
 

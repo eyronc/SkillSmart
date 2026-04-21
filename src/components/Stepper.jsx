@@ -1,5 +1,6 @@
-export default function Stepper({ currentStep }) {
-  const steps = ['Input Resume', 'Analyzing...', 'Results']
+const defaultSteps = ['Input Resume', 'Analyzing...', 'Results']
+
+export default function Stepper({ currentStep, steps = defaultSteps }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-2 mb-8">
       {steps.map((label, i) => {

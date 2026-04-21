@@ -36,6 +36,22 @@ create table if not exists public.learning_resources (
   created_at timestamp with time zone not null default now()
 );
 
+create table if not exists public.interview_attempts (
+  id uuid primary key default gen_random_uuid(),
+  resume_id uuid references public.resumes(id) on delete set null,
+  job_id uuid references public.jobs(id) on delete set null,
+  job_title text not null,
+  challenge_type text not null,
+  prompt_used text not null,
+  answer_text text,
+  transcript_text text,
+  audio_url text,
+  score integer not null default 0,
+  rubric_scores jsonb not null default '[]'::jsonb,
+  feedback jsonb not null default '{}'::jsonb,
+  created_at timestamp with time zone not null default now()
+);
+
 create table if not exists public.scan_results (
   id uuid primary key default gen_random_uuid(),
   resume_text text,
@@ -48,11 +64,19 @@ create index if not exists idx_jobs_title on public.jobs(title);
 create index if not exists idx_learning_resources_skill_tag on public.learning_resources(skill_tag);
 create index if not exists idx_skill_gaps_resume_id on public.skill_gaps(resume_id);
 create index if not exists idx_skill_gaps_job_id on public.skill_gaps(job_id);
+create index if not exists idx_interview_attempts_resume_id on public.interview_attempts(resume_id);
+create index if not exists idx_interview_attempts_job_id on public.interview_attempts(job_id);
+create index if not exists idx_interview_attempts_job_title on public.interview_attempts(job_title);
+
+insert into storage.buckets (id, name, public)
+values ('interview-audio', 'interview-audio', true)
+on conflict (id) do nothing;
 
 alter table public.jobs enable row level security;
 alter table public.resumes enable row level security;
 alter table public.skill_gaps enable row level security;
 alter table public.learning_resources enable row level security;
+alter table public.interview_attempts enable row level security;
 alter table public.scan_results enable row level security;
 
 do $$
@@ -125,6 +149,34 @@ begin
     where schemaname = 'public' and tablename = 'learning_resources' and policyname = 'learning_resources_public_update'
   ) then
     create policy learning_resources_public_update on public.learning_resources for update using (true) with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'interview_attempts' and policyname = 'interview_attempts_public_select'
+  ) then
+    create policy interview_attempts_public_select on public.interview_attempts for select using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'interview_attempts' and policyname = 'interview_attempts_public_insert'
+  ) then
+    create policy interview_attempts_public_insert on public.interview_attempts for insert with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'interview_audio_public_select'
+  ) then
+    create policy interview_audio_public_select on storage.objects for select using (bucket_id = 'interview-audio');
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'interview_audio_public_insert'
+  ) then
+    create policy interview_audio_public_insert on storage.objects for insert with check (bucket_id = 'interview-audio');
   end if;
 
   if not exists (

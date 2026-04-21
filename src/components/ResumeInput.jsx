@@ -1,5 +1,40 @@
 import { useState, useRef } from 'react'
-import { extractTextFromPDF } from '../utils/pdfParser'
+import { extractTextFromDOCX, extractTextFromPDF } from '../utils/pdfParser'
+
+function detectResumeSpam(value) {
+  const normalizedValue = value.trim()
+
+  if (!normalizedValue) {
+    return null
+  }
+
+  const urlMatches = normalizedValue.match(/(?:https?:\/\/|www\.)\S+/gi) || []
+
+  if (urlMatches.length >= 6 || (urlMatches.length >= 3 && normalizedValue.length < 600)) {
+    return 'Please remove excessive links or promotional content before submitting your resume.'
+  }
+
+  if (/(.)\1{14,}/.test(normalizedValue)) {
+    return 'Please remove repeated characters before submitting your resume.'
+  }
+
+  const repeatedLineCounts = new Map()
+
+  for (const line of normalizedValue.split(/\n+/).map((entry) => entry.trim()).filter(Boolean)) {
+    if (line.length < 20) {
+      continue
+    }
+
+    const nextCount = (repeatedLineCounts.get(line) || 0) + 1
+    repeatedLineCounts.set(line, nextCount)
+
+    if (nextCount >= 3) {
+      return 'Please remove duplicated text blocks before submitting your resume.'
+    }
+  }
+
+  return null
+}
 
 export default function ResumeInput({ onSubmit }) {
   const [text, setText] = useState('')
@@ -7,26 +42,33 @@ export default function ResumeInput({ onSubmit }) {
   const [fileObj, setFileObj] = useState(null)
   const [parsing, setParsing] = useState(false)
   const [parseError, setParseError] = useState(null)
+  const [submitError, setSubmitError] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [trapField, setTrapField] = useState('')
   const fileInputRef = useRef(null)
+
+  const normalizedText = text.trim()
+  const spamWarning = trapField.trim() ? 'Submission blocked.' : detectResumeSpam(normalizedText)
 
   async function handleFile(file) {
     if (!file) return
+
+    const lowerName = file.name.toLowerCase()
     const allowed = ['application/pdf', 'text/plain', 'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-    if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|txt|doc|docx)$/i)) {
+    if (!allowed.includes(file.type) && !lowerName.match(/\.(pdf|txt|doc|docx)$/i)) {
       setParseError('Only PDF, TXT, DOC, or DOCX files are supported.')
       return
     }
     setParseError(null)
+    setSubmitError(null)
     setParsing(true)
     setFileName(file.name)
     try {
       let extracted = ''
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
         extracted = await extractTextFromPDF(file)
-      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
-        const { extractTextFromDOCX } = await import('../utils/pdfParser')
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || lowerName.endsWith('.docx')) {
         extracted = await extractTextFromDOCX(file)
       } else {
         // Plain text / doc fallback — read as text
@@ -35,6 +77,7 @@ export default function ResumeInput({ onSubmit }) {
       setText(extracted)
       setFileObj(file)
     } catch (err) {
+      console.error('Error parsing resume file:', err)
       setParseError('Could not read this file. Try a different file or paste text manually.')
       setFileName(null)
       setFileObj(null)
@@ -59,8 +102,25 @@ export default function ResumeInput({ onSubmit }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (text.trim().length < 20) return
-    onSubmit(text.trim())
+    setSubmitError(null)
+
+    if (trapField.trim()) {
+      setSubmitError('Submission blocked.')
+      return
+    }
+
+    if (normalizedText.length < 20) {
+      return
+    }
+
+    const spamMessage = detectResumeSpam(normalizedText)
+
+    if (spamMessage) {
+      setSubmitError(spamMessage)
+      return
+    }
+
+    onSubmit(normalizedText)
   }
 
   function clearFile() {
@@ -68,6 +128,7 @@ export default function ResumeInput({ onSubmit }) {
     setFileName(null)
     setFileObj(null)
     setParseError(null)
+    setSubmitError(null)
   }
 
   return (
@@ -161,19 +222,42 @@ export default function ResumeInput({ onSubmit }) {
 
       {/* Text area */}
       <form onSubmit={handleSubmit}>
+        <div className="absolute left-[-9999px] opacity-0 pointer-events-none" aria-hidden="true">
+          <label htmlFor="company-website">Leave this field empty</label>
+          <input
+            id="company-website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={trapField}
+            onChange={(event) => setTrapField(event.target.value)}
+          />
+        </div>
+
         {!fileObj && (
           <textarea
             className="w-full h-48 p-4 bg-black/20 border border-gray-500/30 rounded-lg text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-pLight transition-shadow whitespace-pre-wrap leading-relaxed"
             placeholder="Paste your resume text here..."
             value={text}
-            onChange={(e) => { setText(e.target.value); setFileName(null); setFileObj(null) }}
+            onChange={(e) => {
+              setText(e.target.value)
+              setFileName(null)
+              setFileObj(null)
+              setSubmitError(null)
+            }}
           />
         )}
+        {(submitError || spamWarning) && (
+          <p className="mt-3 text-xs text-amber-300">{submitError || spamWarning}</p>
+        )}
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-400 font-medium">({text.length} characters)</span>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400 font-medium">({text.length} characters)</span>
+            <span className="text-[11px] text-gray-500">Anti-spam guard blocks excessive links and duplicated promotional text.</span>
+          </div>
           <button
             type="submit"
-            disabled={text.trim().length < 20}
+            disabled={normalizedText.length < 20 || !!spamWarning}
             className="px-6 py-2.5 bg-pBrand text-white rounded-lg font-bold text-sm tracking-tight
               hover:bg-pMain hover:shadow-[0_0_15px_rgba(153,97,255,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >

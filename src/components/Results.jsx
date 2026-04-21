@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { generatePracticeInterview } from '../services/aiService'
+import { getInterviewTemplate } from '../data/interviewTemplates'
 
 function categorizeSkills(skills) {
   const categories = {
@@ -29,36 +29,17 @@ function categorizeSkills(skills) {
   return categories
 }
 
-export default function Results({ extractedSkills, results, onReset, saveState, saveMessage }) {
+function formatDuration(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+export default function Results({ extractedSkills, results, onReset, onStartInterview, saveState, saveMessage }) {
   const [expanded, setExpanded] = useState(null)
-  
-  // Interview Gen State
-  const [interviewGenStatus, setInterviewGenStatus] = useState({}) 
-  // { [jobTitle]: { status: 'idle' | 'loading' | 'success' | 'error', data: null, error: null } }
 
   function toggle(i) {
     setExpanded(expanded === i ? null : i)
-  }
-
-  async function handleGenerateInterview(jobTitle, missingSkills) {
-    setInterviewGenStatus(prev => ({
-      ...prev,
-      [jobTitle]: { status: 'loading', data: null, error: null }
-    }))
-    
-    try {
-      const result = await generatePracticeInterview(missingSkills, jobTitle)
-      setInterviewGenStatus(prev => ({
-        ...prev,
-        [jobTitle]: { status: 'success', data: result.questions, error: null }
-      }))
-    } catch (err) {
-      console.error(err)
-      setInterviewGenStatus(prev => ({
-        ...prev,
-        [jobTitle]: { status: 'error', data: null, error: 'Failed to generate interview.' }
-      }))
-    }
   }
 
   return (
@@ -108,8 +89,7 @@ export default function Results({ extractedSkills, results, onReset, saveState, 
       <h2 className="text-xl font-bold text-white mb-4">Job Matches</h2>
       <div className="flex flex-col gap-4">
         {results.map((job, i) => {
-          const missingSkillNames = job.resources.map(r => r.skill)
-          const interviewData = interviewGenStatus[job.job_title]
+          const interviewTemplate = getInterviewTemplate(job.job_title)
 
           return (
             <div key={job.job_title} className="border border-gray-500/30 rounded-lg bg-black/20 shadow-sm overflow-hidden transition-colors hover:border-gray-500/50">
@@ -195,47 +175,39 @@ export default function Results({ extractedSkills, results, onReset, saveState, 
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
 
-                        {/* Interview Generation Section */}
-                        <div className="mt-2 p-3 bg-pMain/10 border border-pMain/20 rounded-lg">
-                          <h4 className="text-xs font-bold text-white mb-2">Practice Interview</h4>
-                          {!interviewData || interviewData.status === 'idle' ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGenerateInterview(job.job_title, missingSkillNames);
-                              }}
-                              className="px-3 py-1.5 bg-pMain hover:bg-pBrand text-white text-xs font-bold rounded transition-colors shadow-[0_0_10px_rgba(134,39,217,0.4)] w-full flex items-center justify-center gap-2 tracking-tight"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                              Generate AI Interview
-                            </button>
-                          ) : interviewData.status === 'loading' ? (
-                            <div className="flex items-center justify-center gap-2 py-2">
-                              <div className="w-4 h-4 border-2 border-pMain border-t-transparent rounded-full animate-spin" />
-                              <span className="text-xs text-gray-400 font-bold">Generating questions...</span>
-                            </div>
-                          ) : interviewData.status === 'error' ? (
-                            <p className="text-xs text-red-500">{interviewData.error}</p>
-                          ) : (
-                            <div className="flex flex-col gap-3 mt-2">
-                              {interviewData.data.map((q, idx) => (
-                                <div key={idx} className="bg-black/30 p-2.5 rounded border border-gray-600/30">
-                                  <p className="text-xs font-bold text-pLight mb-1">{q.skill}</p>
-                                  <p className="text-sm text-gray-200 mb-2">{q.question}</p>
-                                  <div className="pl-2 border-l-2 border-pAccent/50">
-                                    <p className="text-[10px] uppercase text-gray-500 font-bold mb-1">Expected Points:</p>
-                                    <ul className="list-disc list-inside text-xs text-gray-400">
-                                      {q.expectedPoints.map((pt, pIdx) => (
-                                        <li key={pIdx}>{pt}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                    {interviewTemplate && (
+                      <div className="mt-4 p-4 bg-pMain/10 border border-pMain/20 rounded-lg">
+                        <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                          <div>
+                            <h4 className="text-xs font-bold text-white tracking-[0.25em] uppercase mb-2">
+                              Mock Interview
+                            </h4>
+                            <p className="text-sm text-gray-200 font-semibold">{interviewTemplate.challengeMode}</p>
+                            <p className="text-xs text-gray-400 mt-1 max-w-md">{interviewTemplate.scenarioPrompt}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-pAccent/10 border border-pAccent/30 text-pAccent">
+                              {formatDuration(interviewTemplate.timeLimitSeconds)}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/5 border border-white/10 text-gray-300">
+                              {interviewTemplate.inputMode === 'speech-preferred' ? 'Speech + text fallback' : 'Written response'}
+                            </span>
+                          </div>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onStartInterview(job)
+                          }}
+                          className="px-4 py-2 bg-pBrand hover:bg-pMain text-white text-sm font-bold rounded-lg transition-colors shadow-[0_0_10px_rgba(134,39,217,0.35)]"
+                        >
+                          Start Mock Interview
+                        </button>
                       </div>
                     )}
                   </div>
