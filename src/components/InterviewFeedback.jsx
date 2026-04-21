@@ -83,17 +83,17 @@ export default function InterviewFeedback({
       )}
 
       <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-6">
-        <section className="rounded-[30px] border border-white/10 bg-[rgba(15,23,42,0.55)] p-6 backdrop-blur-md">
-          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Summary</h3>
-          <p className="text-sm text-gray-200 leading-7">{result.feedback.summary}</p>
+        <section className="rounded-[30px] border border-white/10 bg-[#1E1B4B] p-6">
+          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Summary</h3>
+          <p className="text-sm text-gray-100 leading-7">{result.feedback.summary}</p>
 
           <div className="grid sm:grid-cols-2 gap-4 mt-6">
             <div>
               <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-pAccent mb-3">Strengths</h4>
               {result.feedback.strengths.length === 0 ? (
-                <p className="text-sm text-gray-400">No clear strengths were captured yet. Try a fuller response next round.</p>
+                <p className="text-sm text-gray-300">No clear strengths were captured yet. Try a fuller response next round.</p>
               ) : (
-                <ul className="space-y-2 text-sm text-gray-200">
+                <ul className="space-y-2 text-sm text-gray-100">
                   {result.feedback.strengths.map((item) => (
                     <li key={item} className="flex gap-2">
                       <span className="text-pAccent">•</span>
@@ -107,9 +107,9 @@ export default function InterviewFeedback({
             <div>
               <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-amber-300 mb-3">Improve Next</h4>
               {result.feedback.improvements.length === 0 ? (
-                <p className="text-sm text-gray-400">You covered the full rubric well. Tighten delivery and keep practicing for speed.</p>
+                <p className="text-sm text-gray-300">You covered the full rubric well. Tighten delivery and keep practicing for speed.</p>
               ) : (
-                <ul className="space-y-2 text-sm text-gray-200">
+                <ul className="space-y-2 text-sm text-gray-100">
                   {result.feedback.improvements.map((item) => (
                     <li key={item} className="flex gap-2">
                       <span className="text-amber-300">•</span>
@@ -122,11 +122,11 @@ export default function InterviewFeedback({
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-white/10 bg-[rgba(15,23,42,0.55)] p-6 backdrop-blur-md">
-          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Recommended Follow-Ups</h3>
-          <ul className="space-y-3 text-sm text-gray-200">
+        <section className="rounded-[30px] border border-white/10 bg-[#1E1B4B] p-6">
+          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Recommended Follow-Ups</h3>
+          <ul className="space-y-3 text-sm text-gray-100">
             {result.feedback.recommendedFollowUps.map((item) => (
-              <li key={item} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <li key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 {item}
               </li>
             ))}
@@ -135,21 +135,21 @@ export default function InterviewFeedback({
       </div>
 
       {result.audioPlaybackUrl && (
-        <section className="rounded-[30px] border border-white/10 bg-[rgba(15,23,42,0.55)] p-6 backdrop-blur-md">
-          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Recorded Answer</h3>
+        <section className="rounded-[30px] border border-white/10 bg-[#1E1B4B] p-6">
+          <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Recorded Answer</h3>
           <audio controls src={result.audioPlaybackUrl} className="w-full" />
         </section>
       )}
 
       <section>
-        <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-4">Rubric Breakdown</h3>
+        <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-[#1E1B4B] mb-4">Rubric Breakdown</h3>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {result.rubricScores.map((criterion) => (
-            <div key={criterion.key} className="rounded-[28px] border border-white/10 bg-[rgba(15,23,42,0.55)] p-5 backdrop-blur-md">
+            <div key={criterion.key} className="rounded-[28px] border border-white/10 bg-[#1E1B4B] p-5">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
                   <p className="text-sm font-bold text-white">{criterion.label}</p>
-                  <p className="text-xs text-gray-400 mt-1">{criterion.description}</p>
+                  <p className="text-xs text-gray-300 mt-1">{criterion.description}</p>
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${rubricTone(criterion.score)}`}>
                   {criterion.score}/5
@@ -160,14 +160,14 @@ export default function InterviewFeedback({
                   {criterion.matchedSignals.map((signal) => (
                     <span
                       key={signal}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/5 border border-white/10 text-gray-200"
+                      className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/10 border border-white/15 text-gray-100"
                     >
                       {signal}
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500">No strong signal matched for this rubric item.</p>
+                <p className="text-xs text-gray-400">No strong signal matched for this rubric item.</p>
               )}
             </div>
           ))}
@@ -175,7 +175,7 @@ export default function InterviewFeedback({
       </section>
 
       {practicePack && (
-        <section className="rounded-[30px] border border-pAccent/20 bg-pAccent/5 p-6 sm:p-7 backdrop-blur-md">
+        <section className="rounded-[30px] border border-pAccent/20 bg-[#1E1B4B] p-6 sm:p-7">
           <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
             <div>
               <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-pAccent mb-2">{practicePack.title}</h3>
@@ -187,17 +187,17 @@ export default function InterviewFeedback({
           </div>
 
           <div className="grid lg:grid-cols-[1.1fr,0.9fr] gap-6">
-            <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-              <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Strong Sample Answer</h4>
-              <p className="text-sm text-gray-200 leading-7">{practicePack.sampleAnswer}</p>
+            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+              <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Strong Sample Answer</h4>
+              <p className="text-sm text-gray-100 leading-7">{practicePack.sampleAnswer}</p>
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-                <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Likely Q and A</h4>
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Likely Q and A</h4>
                 <div className="space-y-4">
                   {practicePack.questionBank.map((entry) => (
-                    <div key={entry.question} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div key={entry.question} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <p className="text-sm font-bold text-white mb-2">{entry.question}</p>
                       <ul className="space-y-2 text-sm text-gray-200">
                         {entry.strongPoints.map((point) => (
@@ -212,8 +212,8 @@ export default function InterviewFeedback({
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-                <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-400 mb-3">Common Mistakes</h4>
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-gray-300 mb-3">Common Mistakes</h4>
                 <ul className="space-y-2 text-sm text-gray-200">
                   {practicePack.commonMistakes.map((item) => (
                     <li key={item} className="flex gap-2">
@@ -250,7 +250,7 @@ export default function InterviewFeedback({
         <button
           type="button"
           onClick={onBackToResults}
-          className="px-5 py-3 bg-transparent border border-white/20 text-white rounded-2xl font-black text-sm tracking-[0.14em] uppercase hover:bg-white/10 transition-colors"
+          className="px-5 py-3 bg-white border border-violet-200 text-[#1E1B4B] rounded-2xl font-black text-sm tracking-[0.14em] uppercase hover:bg-violet-50 hover:border-pBrand transition-colors shadow-sm"
         >
           Back to Results
         </button>

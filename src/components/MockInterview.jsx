@@ -509,7 +509,7 @@ export default function MockInterview({ job, template, onBack, onComplete, submi
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-5 py-2.5 bg-transparent border border-gray-500/40 text-gray-300 rounded-lg font-bold text-sm hover:border-gray-300 hover:text-white transition-colors"
+                className="px-5 py-2.5 bg-white border border-violet-200 text-[#1E1B4B] rounded-lg font-bold text-sm hover:bg-violet-50 hover:border-pBrand transition-colors shadow-sm"
               >
                 Back to Results
               </button>
@@ -593,7 +593,7 @@ export default function MockInterview({ job, template, onBack, onComplete, submi
                       type="button"
                       onClick={handleResetResponse}
                       disabled={busy}
-                      className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-500/40 text-gray-300 hover:text-white hover:border-gray-300 transition-colors"
+                      className="px-4 py-2 rounded-lg text-sm font-bold border border-violet-200 bg-white text-[#1E1B4B] hover:bg-violet-50 hover:border-pBrand transition-colors disabled:opacity-50"
                     >
                       Clear Response
                     </button>
@@ -654,7 +654,7 @@ export default function MockInterview({ job, template, onBack, onComplete, submi
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="px-4 py-2 rounded-lg text-sm font-bold border border-gray-500/40 text-gray-300 hover:text-white hover:border-gray-300 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-bold border border-violet-200 bg-white text-[#1E1B4B] hover:bg-violet-50 hover:border-pBrand transition-colors"
                   disabled={busy}
                 >
                   Back
