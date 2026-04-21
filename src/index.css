@@ -2,14 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,600&display=swap');
-
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: #0F172A; /* primary base */
   color: #F8FAFC; /* text primary */
   margin: 0;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slideUpFade 0.8s ease-out forwards;
+}
+.delay-100 { animation-delay: 100ms; opacity: 0; }
+.delay-200 { animation-delay: 200ms; opacity: 0; }
+.delay-300 { animation-delay: 300ms; opacity: 0; }
+.delay-400 { animation-delay: 400ms; opacity: 0; }
+
+/* Desktop Print/PDF Optimization */
+@media print {
+  @page { margin: 15mm; size: auto; }
+  body {
+    background: white !important;
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .glass-panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  /* Force dark backgrounds to white and text to black to save ink and look professional */
+  .bg-black\/20, .bg-black\/30, .bg-black\/40, .bg-white\/5, .bg-white\/10 {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  .bg-pAccent\/5, .bg-pAccent\/10, .bg-amber-400\/10 {
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+  }
+  h2, h3, h4, p, span, li, div { text-shadow: none !important; }
+  .text-white, .text-gray-200, .text-gray-300, .text-gray-400 { color: #111827 !important; }
+  .text-pAccent, .text-pLight, .text-amber-300 { color: #432C7A !important; }
+  button, nav, header, video, .hidden-print, a { display: none !important; }
+  
+  /* Break pages properly */
+  section { page-break-inside: avoid; }
 }
 
 /* Glassmorphism utility */

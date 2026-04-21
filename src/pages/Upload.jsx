@@ -415,7 +415,7 @@ export default function Upload() {
 
     const evaluationMessage =
       scoredAttempt.evaluationMethod === 'ai-transcript'
-        ? 'Scored with the free AI transcript evaluator.'
+        ? 'Scored with the AI transcript evaluator.'
         : 'AI scoring was unavailable, so the rules-based fallback was used.'
 
     revokeLocalAudioPreview(interviewResult)
@@ -451,11 +451,11 @@ export default function Upload() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(135deg, #0F172A 0%, #59167F 100%)' }}>
+    <div className="min-h-screen overflow-x-hidden flex flex-col w-full" style={{ backgroundImage: 'linear-gradient(135deg, #0F172A 0%, #59167F 100%)' }}>
       <Navbar />
 
       {/* Main */}
-      <main className={`${step >= 4 ? 'max-w-6xl' : 'max-w-4xl'} mx-auto px-4 py-10`}>
+      <main className={`${step >= 4 ? 'max-w-6xl' : 'max-w-4xl'} w-full mx-auto px-4 sm:px-6 py-6 md:py-10 flex-1`}>
         <Stepper currentStep={step} steps={uploadSteps} />
 
         {error && (

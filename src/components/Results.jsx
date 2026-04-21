@@ -95,16 +95,17 @@ export default function Results({ extractedSkills, results, onReset, onStartInte
             <div key={job.job_title} className="border border-gray-500/30 rounded-lg bg-black/20 shadow-sm overflow-hidden transition-colors hover:border-gray-500/50">
               {/* Job header */}
               <button
-                className="w-full flex items-center justify-between px-5 py-4 text-left focus:outline-none"
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-5 py-4 text-left focus:outline-none gap-3 sm:gap-4"
                 onClick={() => toggle(i)}
               >
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-white tracking-wide">{job.job_title}</span>
-                  <ScoreBadge score={job.score} />
+                <div className="flex items-start sm:items-center justify-between w-full sm:w-auto gap-4">
+                  <span className="font-semibold text-white tracking-wide leading-tight">{job.job_title}</span>
+                  <div className="sm:hidden block shrink-0"><ScoreBadge score={job.score} /></div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-4">
+                  <div className="hidden sm:block"><ScoreBadge score={job.score} /></div>
                   {/* Progress bar */}
-                  <div className="w-32 h-2.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="flex-1 sm:w-32 h-2.5 bg-white/5 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
@@ -114,19 +115,18 @@ export default function Results({ extractedSkills, results, onReset, onStartInte
                       }}
                     />
                   </div>
-                  <span className="text-gray-400 text-sm">
-                    {expanded === i ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    )}
+                  <span className={`text-[#D7B4F3] text-sm shrink-0 transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </span>
                 </div>
               </button>
 
-              {/* Expanded details */}
-              {expanded === i && (
-                <div className="px-5 pb-5 border-t border-gray-500/30 pt-4 grid sm:grid-cols-2 gap-6 bg-black/10">
+              {/* Expanded details with smooth transition */}
+              <div 
+                className={`grid transition-all duration-300 ease-in-out ${expanded === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="px-5 pb-5 border-t border-[#8601CE]/30 pt-4 grid sm:grid-cols-2 gap-6 bg-black/10">
                   {/* Matched */}
                   <div>
                     <h3 className="text-xs font-bold text-pAccent tracking-widest uppercase mb-3 flex items-center gap-2">
@@ -212,7 +212,8 @@ export default function Results({ extractedSkills, results, onReset, onStartInte
                     )}
                   </div>
                 </div>
-              )}
+                </div>
+              </div>
             </div>
           )
         })}
@@ -230,15 +231,15 @@ export default function Results({ extractedSkills, results, onReset, onStartInte
 }
 
 function ScoreBadge({ score }) {
-  let cls = 'text-xs font-bold px-2.5 py-1 rounded-full border tracking-tight '
+  let cls = 'text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-full border tracking-tight whitespace-nowrap '
   if (score >= 76) cls += 'bg-pAccent/10 text-pAccent border-pAccent/30 shadow-[0_0_8px_rgba(237,155,255,0.3)]'
-  else if (score >= 41) cls += 'bg-pLight/10 text-pLight border-pLight/30 shadow-[0_0_8px_rgba(153,97,255,0.3)]'
-  else cls += 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+  else if (score >= 41) cls += 'bg-[#8601CE]/20 text-[#D7B4F3] border-[#8601CE]/40 shadow-[0_0_8px_rgba(134,1,206,0.3)]'
+  else cls += 'bg-white/10 text-gray-300 border-white/20 shadow-sm'
   return <span className={cls}>{score}% Match</span>
 }
 
 function scoreColor(score) {
   if (score >= 76) return '#ED9BFF' // pAccent
-  if (score >= 41) return '#9961FF' // pLight
-  return '#59167F' // pDark
+  if (score >= 41) return '#8601CE' // Landing page prominent purple
+  return '#B794F4' // Lighter purple for visibility
 }
