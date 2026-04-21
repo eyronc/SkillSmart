@@ -25,7 +25,7 @@ export default function InterviewFeedback({
     <div className="max-w-5xl mx-auto glass-panel p-8 rounded-xl shadow-xl">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
-          <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-pAccent mb-2">
+          <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-[#8601CE] drop-shadow-sm mb-2">
             {job.job_title}
           </p>
           <h2 className="text-2xl font-bold text-white">Interview Feedback</h2>
@@ -228,7 +228,14 @@ export default function InterviewFeedback({
         </section>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 hidden-print">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="px-5 py-2.5 bg-[#1E1B4B] text-white rounded-lg font-bold text-sm border border-[#432C7A] hover:bg-[#432C7A] hover:shadow-[0_0_15px_rgba(134,39,217,0.5)] transition-all transform hover:-translate-y-0.5"
+        >
+          Export to PDF
+        </button>
         <button
           type="button"
           onClick={onRetry}
@@ -239,7 +246,7 @@ export default function InterviewFeedback({
         <button
           type="button"
           onClick={onBackToResults}
-          className="px-5 py-2.5 bg-transparent border border-gray-500/40 text-gray-300 rounded-lg font-bold text-sm hover:border-gray-300 hover:text-white transition-colors"
+          className="px-5 py-2.5 bg-transparent border border-[#8601CE]/40 text-[#D7B4F3] rounded-lg font-bold text-sm hover:border-[#8601CE] hover:text-white transition-colors"
         >
           Back to Results
         </button>

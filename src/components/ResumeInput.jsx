@@ -132,7 +132,7 @@ export default function ResumeInput({ onSubmit }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto glass-panel p-8 rounded-xl shadow-xl">
+    <div className="max-w-2xl w-full mx-auto glass-panel p-5 sm:p-8 rounded-xl shadow-xl">
       <h2 className="text-2xl font-bold text-white mb-2">Analyze Your Resume</h2>
       <p className="text-gray-300 text-sm mb-6">
         Upload a PDF/DOCX or paste your resume text. Our AI will extract skills and match you to jobs.
@@ -161,16 +161,16 @@ export default function ResumeInput({ onSubmit }) {
             <span className="text-sm font-medium">Reading file...</span>
           </div>
         ) : fileName ? (
-          <div className="flex items-center justify-between px-4 py-2 bg-black/30 rounded-lg">
-            <div className="flex items-center gap-3 text-sm text-white font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pAccent"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              <span>{fileName}</span>
-              <span className="text-pAccent text-xs font-semibold px-2 py-0.5 bg-pAccent/10 rounded-full">Extracted</span>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-black/30 rounded-lg w-full overflow-hidden">
+            <div className="flex items-center gap-2 sm:gap-3 text-sm text-white font-medium w-full sm:w-auto overflow-hidden">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pAccent shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span className="truncate">{fileName}</span>
+              <span className="text-pAccent text-[10px] sm:text-xs font-semibold px-2 py-0.5 bg-pAccent/10 rounded-full shrink-0">Extracted</span>
             </div>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); clearFile() }}
-              className="text-xs text-red-400 hover:text-white transition-colors flex items-center gap-1"
+              className="text-xs text-red-400 hover:text-white transition-colors flex items-center gap-1 shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               Remove
@@ -250,7 +250,7 @@ export default function ResumeInput({ onSubmit }) {
         {(submitError || spamWarning) && (
           <p className="mt-3 text-xs text-amber-300">{submitError || spamWarning}</p>
         )}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 gap-4 sm:gap-0">
           <div className="flex flex-col gap-1">
             <span className="text-xs text-gray-400 font-medium">({text.length} characters)</span>
             <span className="text-[11px] text-gray-500">Anti-spam guard blocks excessive links and duplicated promotional text.</span>
